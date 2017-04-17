@@ -3,18 +3,12 @@
 
 #include "stdafx.h"
 #include "DirectX.h"
-/*#include <d3d9.h>
-#include <d3dx9.h*/
-//#include <InitGuid.h>
 #include "Shapes.h"
 #include "GenSinus.h"
 #include "AppSound.h"
 #include "math.h"
 #include <vector>
-/*#include <stdlib.h>
-#include <stdio.h>*/
-/*#include <XAudio2.h>
-#include <dsound.h>*/
+#include <process.h>
 
 #define MAX_LOADSTRING 100
 #define CAR_WIDTH 2
@@ -30,38 +24,6 @@ HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 
-/*CUSTOMVERTEX verticesLight[] =
-{
-        { -3.0f, -3.0f, 3.0f, 0.0f, 0.0f, 1.0f, },    // side 1
-        { 3.0f, -3.0f, 3.0f, 0.0f, 0.0f, 1.0f, },
-        { -3.0f, 3.0f, 3.0f, 0.0f, 0.0f, 1.0f, },
-        { 3.0f, 3.0f, 3.0f, 0.0f, 0.0f, 1.0f, },
-
-        { -3.0f, -3.0f, -3.0f, 0.0f, 0.0f, -1.0f, },    // side 2
-        { -3.0f, 3.0f, -3.0f, 0.0f, 0.0f, -1.0f, },
-        { 3.0f, -3.0f, -3.0f, 0.0f, 0.0f, -1.0f, },
-        { 3.0f, 3.0f, -3.0f, 0.0f, 0.0f, -1.0f, },
-
-        { -3.0f, 3.0f, -3.0f, 0.0f, 1.0f, 0.0f, },    // side 3
-        { -3.0f, 3.0f, 3.0f, 0.0f, 1.0f, 0.0f, },
-        { 3.0f, 3.0f, -3.0f, 0.0f, 1.0f, 0.0f, },
-        { 3.0f, 3.0f, 3.0f, 0.0f, 1.0f, 0.0f, },
-
-        { -3.0f, -3.0f, -3.0f, 0.0f, -1.0f, 0.0f, },    // side 4
-        { 3.0f, -3.0f, -3.0f, 0.0f, -1.0f, 0.0f, },
-        { -3.0f, -3.0f, 3.0f, 0.0f, -1.0f, 0.0f, },
-        { 3.0f, -3.0f, 3.0f, 0.0f, -1.0f, 0.0f, },
-
-        { 3.0f, -3.0f, -3.0f, 1.0f, 0.0f, 0.0f, },    // side 5
-        { 3.0f, 3.0f, -3.0f, 1.0f, 0.0f, 0.0f, },
-        { 3.0f, -3.0f, 3.0f, 1.0f, 0.0f, 0.0f, },
-        { 3.0f, 3.0f, 3.0f, 1.0f, 0.0f, 0.0f, },
-
-        { -3.0f, -3.0f, -3.0f, -1.0f, 0.0f, 0.0f, },    // side 6
-        { -3.0f, -3.0f, 3.0f, -1.0f, 0.0f, 0.0f, },
-        { -3.0f, 3.0f, -3.0f, -1.0f, 0.0f, 0.0f, },
-        { -3.0f, 3.0f, 3.0f, -1.0f, 0.0f, 0.0f, },
-};*/
 CUSTOMVERTEX rectVertices[] =
 {
 	{ -1.0f, -1.0f, 16.0f, 1.0f, 1.0f },    
@@ -271,25 +233,11 @@ CUSTOMVERTEX gunFireRect[] =
     { 0.1f, -3.0f, -10.0f, 0.0f, 0.0f }
 };
 
-short indices[] =
-{
-    0, 1, 2,    // side 1
-    2, 1, 3,
-    4, 0, 6,    // side 2
-    6, 0, 2,
-    7, 5, 6,    // side 3
-    6, 5, 4,
-    3, 1, 7,    // side 4
-    7, 1, 5,
-    4, 5, 0,    // side 5
-    0, 5, 1,
-    3, 7, 2,    // side 6
-    2, 7, 6,
-};
-
-#define CUSTOMFVF (D3DFVF_XYZ /*| D3DFVF_NORMAL*/ | D3DFVF_TEX1 )
-#define CUSTOMFVF2 (D3DFVF_XYZ /*| D3DFVF_NORMAL*/ | D3DFVF_TEX1 | D3DFVF_DIFFUSE)
+#define CUSTOMFVF (D3DFVF_XYZ | D3DFVF_TEX1 )
+#define CUSTOMFVF2 (D3DFVF_XYZ  | D3DFVF_TEX1 | D3DFVF_DIFFUSE)
 #define OBSTACLES_NUMBER 170
+#define OBSTACLES_OFFSET -500
+#define OBSTACLES_DISTANCE -40
 
 IDirect3D9* d = Direct3DCreate9(D3D_SDK_VERSION);
 IDirect3DDevice9* dev;
@@ -300,7 +248,7 @@ LPDIRECT3DSURFACE9 pZBuffer;
 IDirect3DSurface9 *cubeSurface;
 float cnt = 0;
 int direction = 1;
-bool start = true;
+bool start = false;
 bool fire = false;
 float value = 2;
 float numSegs[] = {4, 3, 3};
@@ -476,141 +424,47 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
                           &i_buffer,
                           NULL);
 
-/*	D3DLIGHT9 light;    // create the light struct
-	D3DMATERIAL9 material;    // create the material struct
-
-    ZeroMemory(&light, sizeof(light));    // clear out the light struct for use
-    light.Type = D3DLIGHT_DIRECTIONAL;    // make the light type 'directional light'
-    light.Diffuse = D3DXCOLOR(0.7f, 0.5f, 0.0f, 1.0f);    // set the light's color
-    light.Direction = D3DXVECTOR3(-1.0f, -0.3f, -1.0f);
-
-    dev->SetLight(0, &light);    // send the light struct properties to light #0
-    dev->LightEnable(0, TRUE);    // turn on light #0
-
-	ZeroMemory(&material, sizeof(D3DMATERIAL9));    // clear out the struct for use
-    material.Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);    // set diffuse color to white
-    material.Ambient = D3DXCOLOR(0.0f, 0.0f, 0.0f, 0.0f);    // set ambient color to white
-
-    dev->SetMaterial(&material);    // set the globably-used material to &material
-
-	dev->SetRenderState(D3DRS_LIGHTING, true);
-	dev->SetRenderState(D3DRS_ZENABLE, true);
-	dev->SetRenderState(D3DRS_AMBIENT, D3DCOLOR_XRGB(10, 10, 10));*/
-
-
-
 	LPCWSTR wsPath = L"D://Textures//Penguins.jpg"; // path to the image
     D3DXIMAGE_INFO Info;
 
 	if(FAILED(D3DXGetImageInfoFromFile(wsPath, &Info)))
-		MessageBox(hWnd, L"Ne valja", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading image failed!", NULL, MB_OK);
 	if(FAILED(dev -> CreateOffscreenPlainSurface(Info.Width, Info.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, NULL)))
-		MessageBox(hWnd, L"Ne valja surface", NULL, MB_OK);
+		MessageBox(hWnd, L"Creating surface failed!", NULL, MB_OK);
 	HRESULT h = D3DXLoadSurfaceFromFile(surface, NULL, NULL, wsPath, NULL, D3DX_FILTER_NONE, 0, NULL);
 	 if(h == D3DERR_INVALIDCALL || h == D3DXERR_INVALIDDATA)
-		 MessageBox(hWnd, L"Ne valja", NULL, MB_OK);
+		 MessageBox(hWnd, L"Loading surface failed!", NULL, MB_OK);
 	 dev->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &backBuffer);
 
-	//dev->SetRenderState(D3DRS_FOGENABLE, true);
-  /* HRESULT hr = dev->CreateCubeTexture(256, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8,  D3DPOOL_DEFAULT, &cubeTexture, NULL);
-
-   if(FAILED(hr))
-   {
-	   exit(0);
-   }
-
-    D3DXMATRIX matProjSave, matViewSave;
-    dev->GetTransform(D3DTS_VIEW,       &matViewSave );
-    dev->GetTransform(D3DTS_PROJECTION, &matProjSave);
-
-	D3DXMATRIX matProj;
-    D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI/2, 1.0f, 0.5f, 1000.0f);
-    dev->SetTransform(D3DTS_PROJECTION, &matProj);
-
-	D3DXVECTOR3 vEnvEyePt;
-	vEnvEyePt.x = 0;
-	vEnvEyePt.y = 0;
-	vEnvEyePt.z = 10;
-    D3DXVECTOR3 vLookatPt, vUpVec;
-	vLookatPt.x = 0;
-	vLookatPt.y = 0;
-	vLookatPt.z = 0;
-
-	vUpVec.x = 0;
-	vUpVec.y = 1;
-	vUpVec.z = 0;
-
-	D3DXMATRIX matView;
-    D3DXMatrixLookAtLH(&matView, &vEnvEyePt, &vLookatPt, &vUpVec);
-	dev->SetTransform(D3DTS_VIEW, &matView);
-
-	cubeTexture->GetCubeMapSurface(D3DCUBEMAP_FACE_NEGATIVE_Y, 0, &cubeSurface);
-	//cubeTexture->UnlockRect(D3DCUBEMAP_FACE_POSITIVE_X, 0);
-	dev->GetDepthStencilSurface(&pZBuffer);*/
-
-	//dev->SetRenderTarget(1, cubeSurface);
-	/*if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//car_back1.jpg", &fileTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);*/
-
-	/*if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//car_back2.jpg", &carTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);*/
-
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//road_texture.jpg", &fileTextureGrass)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//grasstext.jpg", &fileTextureFence)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//desert.jpg", &fileTextureBrick)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//sky.jpg", &skyTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//tree.jpg", &piramidTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//fire.jpg", &fireTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//tree_wood.jpg", &woodTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//obstacle.jpg", &obstacleTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	if(FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//wall.jpg", &gateTexture)))
-		MessageBox(hWnd, L"Ne valja tekstura", NULL, MB_OK);
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
-	D3DXCreateTextureFromFileEx(dev, 
-	(L"D://Textures//car_back8.jpg"),
-	D3DX_DEFAULT,
-	 D3DX_DEFAULT,
-	D3DX_DEFAULT,
-	NULL,
-	D3DFMT_A8R8G8B8, 
-	D3DPOOL_MANAGED,
-	D3DX_DEFAULT,
-	D3DX_DEFAULT,
-	D3DCOLOR_ARGB(255,  127, 127, 127),
-	NULL,
-	NULL,
-	&carTexture);
-
-	D3DXCreateTextureFromFileEx(dev, 
-	(L"D://Textures//car_back7.jpg"),
-	 D3DX_DEFAULT,
-	 D3DX_DEFAULT,
-	D3DX_DEFAULT,
-	NULL,
-	D3DFMT_A8R8G8B8, 
-	D3DPOOL_MANAGED,
-	D3DX_DEFAULT,
-	D3DX_DEFAULT,
-	D3DCOLOR_ARGB(255, 127, 127, 127),
-	NULL,
-	NULL,
-	&fileTexture);
+	if (FAILED(D3DXCreateTextureFromFile(dev, L"D://Textures//car_texture2.png", &fileTexture)))
+		MessageBox(hWnd, L"Loading texture failed!", NULL, MB_OK);
 
 	dev->SetRenderState(D3DRS_ALPHABLENDENABLE, true);
 
@@ -660,16 +514,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	for(int i = 0; i < OBSTACLES_NUMBER; i++)
 	{
-		obstaclesPosition.push_back(new Position(rand()%10-10, rand()%10-10, rand()%10-10, (Direction)(i%2)));
+		obstaclesPosition.push_back(new Position(rand()%10-10, rand()%10-10, OBSTACLES_OFFSET+OBSTACLES_DISTANCE*i, 
+			(Direction)(i%2)));
 	}
 
 	hr = soundBuffer->SetVolume(-2000);
 	if(FAILED(hr))
 		MessageBox(hWnd, L"Setting sound volume failed!", NULL, MB_OK);
-	
-	hr = soundBuffer->Play(0, 0, DSBPLAY_LOOPING);
-	if(FAILED(hr))
-		MessageBox(hWnd, L"Playing sound failed!", NULL, MB_OK);
+
+	MessageBox(hWnd, L"Press SPACE to start.", L"Starting Game", MB_OK);
 
 	return TRUE;
 }
@@ -693,8 +546,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYUP:
 		switch(wParam)
 		{
+		/* Debug */
 		case VK_UP:
-			start = false;
+			/*start = false;
 			hr = soundBuffer->Stop();
 			if(FAILED(hr))
 			{
@@ -705,10 +559,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if(FAILED(hr))
 			{
 				MessageBox(hWnd, L"Rewinding sound failed!", NULL, MB_OK);
-			}
+			}*/
 			break;
+		/* Debug */
 		case VK_CONTROL:
-			fire = false;
+			/*fire = false;
 			hr = soundBuffer2->Stop();
 			if(FAILED(hr))
 			{
@@ -719,15 +574,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if(FAILED(hr))
 			{
 				MessageBox(hWnd, L"Rewinding sound failed!", NULL, MB_OK);
-			}
+			}*/
 			break;
 		}
 		break;
 	case WM_KEYDOWN:
 		switch(wParam)
 		{
+		/* Debug */
 		case VK_UP:
-			if(!start)
+			/*if(!start)
 			{
 				soundBuffer->SetVolume(-2000);
 				hr = soundBuffer->Play(0,  0,  DSBPLAY_LOOPING);
@@ -736,10 +592,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					MessageBox(hWnd, L"Playing sound failed!", NULL, MB_OK);
 				}
 				start = true;
-			}
+			}*/
 			break;
+		/* Debug */
 		case VK_DOWN:
-			zZoom += value;
+			//zZoom += value; 
 			break;
 		case VK_LEFT:
 			if(move < 8)
@@ -750,15 +607,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				move -= 1.0f;
 			break;
 		case VK_SPACE:
-			value = 8;
+			if(!start)
+			{
+				start = true;
+				hr = soundBuffer->Play(0, 0, DSBPLAY_LOOPING);
+				if (FAILED(hr))
+					MessageBox(hWnd, L"Playing sound failed!", NULL, MB_OK);
+			}
 			break;
 		case VK_CONTROL:
-			fire = true;
+			/*fire = true;
 			hr = soundBuffer2->Play(0,  0,  DSBPLAY_LOOPING); 
 			if (FAILED(hr))
 			{
 				MessageBox(hWnd, L"Playing sound failed!", NULL, MB_OK);
-			}
+			}*/
 			break;
 		}
 		break;	
@@ -872,18 +735,27 @@ void render()
 				soundBuffer3->SetCurrentPosition(0);
 				soundBuffer3->Play(0, 0, 0);
 				soundBuffer->Stop();
-				MessageBox(NULL, L"Game over!", NULL, MB_OK);
 				for(int i = 0; i < obstaclesPosition.size(); i++)
 				{
 					delete obstaclesPosition[i];
 				}
-				exit(0);
+				
+				int messageId = MessageBox(NULL, L"Game Over!\nNew Game?", L"GAME", MB_YESNO);
+
+				switch (messageId)
+				{
+				case IDYES:
+					_execl("C:\\Users\\Milan\\Documents\\Visual Studio 2017\\Projects\\DirectX\\Release\\DirectX.exe"
+						, "C:\\Users\\Milan\\Documents\\Visual Studio 2017\\Projects\\DirextX\\Release\\DirectX.exe", NULL);
+				case IDNO:
+					exit(0);
+				}
 			}
 			
 			if(zZoom < -5000)
 			{
 				soundBuffer->Stop();
-				MessageBox(NULL, L"You win!", NULL, MB_OK);
+				MessageBox(NULL, L"You win!", L"Game", MB_OK);
 				exit(0);
 			}
 
@@ -893,7 +765,7 @@ void render()
 					obstaclesPosition[i]->direction = (obstaclesPosition[i]->direction == LEFT) ? RIGHT : LEFT;
 				obstaclesPosition[i]->x += (obstaclesPosition[i]->direction == LEFT) ? 0.2 : -0.2;
 				
-				D3DXMatrixTranslation(&matTranslateX, obstaclesPosition[i]->x, -3, -40*i);
+				D3DXMatrixTranslation(&matTranslateX, obstaclesPosition[i]->x, -3, obstaclesPosition[i]->z);
                 D3DXMatrixScaling(&scale, 0.1, 1, 0.1);
 				dev->SetTransform(D3DTS_WORLD, &(scale*matTranslateX));
 				Shapes::DrawCuboid(dev, verticesCubeTexture, i_buffer, vertex);
@@ -988,11 +860,17 @@ void render()
 			dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
 			dev->SetTexture(0, fileTexture);
-			D3DXMatrixTranslation(&matTranslateX, move, 0, zZoom-20);
-			dev->SetTransform(D3DTS_WORLD, &(matTranslateX));
+			D3DXMatrixTranslation(&matRotateX, move, 1.5f, zZoom-20);
+
+			D3DXMatrixScaling(&matTranslateX, 2.0f, 2.0f, 1.0f);
+			dev->SetTransform(D3DTS_WORLD, &(matTranslateX*matRotateX));
+
 			Shapes::DrawRect(dev, rectVertices2, i_buffer, vertex);
 			dev->SetTexture(0, carTexture);
-			Shapes::DrawRect(dev, rectVertices, i_buffer, vertex);
+
+
+			
+			//Shapes::DrawRect(dev, rectVertices, i_buffer, vertex);
 
 			dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
 			dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
@@ -1014,7 +892,7 @@ bool crash()
 {
 	for(int i = 0; i < OBSTACLES_NUMBER; i++)
 	{
-		if(abs(obstaclesPosition[i]->x - move) <= (CAR_WIDTH/2+OBSTACLE_WIDTH) && abs(zZoom-6+40*i) <= 1)
+		if(abs(obstaclesPosition[i]->x - move) <= (CAR_WIDTH/2+OBSTACLE_WIDTH) && abs(zZoom-6-obstaclesPosition[i]->z) <= 1)
 			return true;
 	}
 	return false;
